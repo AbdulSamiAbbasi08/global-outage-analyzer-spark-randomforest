@@ -7,3 +7,6 @@ dash
 open-meteo-api
 python-dotenv
 joblib
+
+
+C:\Users\abbas\AppData\Local\Programs\Python\Python311\python.exe dashboard/app.py
