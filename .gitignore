@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pkl
+*.csv
+.env
+.DS_Store
+data/
+models/
