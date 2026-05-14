@@ -1,0 +1,9 @@
+pyspark
+pandas
+scikit-learn
+requests
+plotly
+dash
+open-meteo-api
+python-dotenv
+joblib
