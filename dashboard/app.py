@@ -5,6 +5,9 @@ import plotly.graph_objects as go
 import pandas as pd
 import joblib
 import numpy as np
+import os
+
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 print("Loading data and model...")
 
@@ -114,45 +117,56 @@ app.layout = html.Div(style={"fontFamily": "Arial", "backgroundColor": "#0f1117"
 @app.callback(Output("world-map", "figure"), Input("country-dropdown", "value"))
 def update_map(_):
     try:
+        # 2-letter to 3-letter ISO code mapping
+        iso2_to_iso3 = {
+            "AF": "AFG", "AU": "AUS", "BD": "BGD", "BR": "BRA",
+            "CA": "CAN", "CN": "CHN", "CU": "CUB", "DE": "DEU",
+            "EG": "EGY", "ES": "ESP", "ET": "ETH", "FR": "FRA",
+            "GB": "GBR", "ID": "IDN", "IN": "IND", "IR": "IRN",
+            "IT": "ITA", "JP": "JPN", "KR": "KOR", "MM": "MMR",
+            "MX": "MEX", "NG": "NGA", "PH": "PHL", "PK": "PAK",
+            "RU": "RUS", "SA": "SAU", "TR": "TUR", "UA": "UKR",
+            "US": "USA", "VE": "VEN",
+        }
+
         country_stats = df.groupby(["country", "iso_code"])["outage"].mean().reset_index()
         country_stats.columns = ["country", "iso_code", "outage_rate"]
         country_stats["outage_pct"] = (country_stats["outage_rate"] * 100).round(1)
+        country_stats["iso3"] = country_stats["iso_code"].map(iso2_to_iso3)
 
-        fig = go.Figure(data=go.Choropleth(
-            locations=country_stats["iso_code"],
-            z=country_stats["outage_pct"],
-            text=country_stats["country"],
-            colorscale=[[0, "#00ff88"], [0.5, "#ffaa00"], [1.0, "#ff4444"]],
-            zmin=0,
-            zmax=80,
-            marker_line_color="#333",
-            marker_line_width=0.5,
-            colorbar=dict(
-                title="Risk %",
-                tickfont=dict(color="white"),
-                titlefont=dict(color="white"),
-            ),
-            hovertemplate="<b>%{text}</b><br>Outage Risk: %{z}%<extra></extra>",
-        ))
+        fig = px.choropleth(
+            country_stats,
+            locations="iso3",
+            color="outage_pct",
+            hover_name="country",
+            locationmode="ISO-3",
+            color_continuous_scale=["#00ff88", "#ffaa00", "#ff4444"],
+            range_color=[0, 80],
+            labels={"outage_pct": "Risk %"},
+        )
+
+        fig.update_geos(
+            showframe=False,
+            showcoastlines=True,
+            coastlinecolor="#888",
+            showland=True,
+            landcolor="#3a3a3a",
+            showocean=True,
+            oceancolor="#1a1a2e",
+            projection_type="equirectangular",
+        )
 
         fig.update_layout(
-            geo=dict(
-                showframe=False,
-                showcoastlines=True,
-                coastlinecolor="#555",
-                showland=True,
-                landcolor="#1a1a2e",
-                showocean=True,
-                oceancolor="#0f1117",
-                showlakes=False,
-                bgcolor="#0f1117",
-                projection_type="natural earth",
-            ),
             paper_bgcolor="#1a1a2e",
             font_color="white",
             margin=dict(l=0, r=0, t=0, b=0),
             height=420,
+            coloraxis_colorbar=dict(
+                title=dict(text="Risk %", font=dict(color="white")),
+                tickfont=dict(color="white"),
+            ),
         )
+
         return fig
     except Exception as e:
         print(f"Map error: {e}")
